@@ -1,7 +1,4 @@
-
-
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class PublicacionesYAutores {
 	
@@ -18,11 +15,9 @@ public class PublicacionesYAutores {
 	}
 	
 	public ArrayList<Autor> obtenerListaAutores (Publicacion p){
-		UnorderedDoubleLinkedList<String> lista = mp.obtenerListaAutores(p);
+		ArrayList<String> lista = mp.obtenerListaAutores(p);
 		ArrayList<Autor> lista2 = new ArrayList<>();
-		Iterator<String> iterador = lista.iterator();
-		while (iterador.hasNext()) {
-			String idAutor = iterador.next();
+		for (String idAutor: lista) {
 			Autor a = ma.buscarAutor(idAutor);
 			lista2.add(a);
 		}

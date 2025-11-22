@@ -1,20 +1,18 @@
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
 public class MapaPubli {
 
     //Atributos: Declaracion de HashMaps
-	private HashMap<String, OrderedDoubleLinkedList<String>> mapaPublisCitadas; //Relaciona el código con publicacion citada (String)
+	private HashMap<String, ArrayList<String>> mapaPublisCitadas; //Relaciona el código con publicacion citada (String)
 	private HashMap<String, Publicacion> mapaPublicaciones;//Relaciona el código con la publicacion (Publicacion)
-	private HashMap<String, UnorderedDoubleLinkedList<String>> mapaPublisAutor; //Relaciona el codigo con las publicaciones del Autor (String)
+	private HashMap<String, ArrayList<String>> mapaPublisAutor; //Relaciona el codigo con las publicaciones del Autor (String)
                                                                 // Lo hacemos de tipo String para evitar bulces infinitos
 	//Constructora
     // Los HashMaps son como los ArrayList, pero mas eficientes
@@ -34,7 +32,7 @@ public class MapaPubli {
 				linea = entrada.nextLine(); //Guardo la linea del fichero en la variable linea
 				String info[]= linea.split("\\s+#\\s+"); //Cojo ambos datos separados por un #
 				if (!mapaPublisCitadas.containsKey(info[0])) { //Si el primer codigo que he guardado no esta guardado
-					mapaPublisCitadas.put(info[0], new OrderedDoubleLinkedList<String>()); //Añado el primer codigo y creo un ArrayList
+					mapaPublisCitadas.put(info[0], new ArrayList<String>()); //Añado el primer codigo y creo un ArrayList
                                                                             // donde guardaré las publis citadas
 				}
 				mapaPublisCitadas.get(info[0]).add(info[1]); // Si ya esta guardada, le añado la citada (el segundo codigo).
@@ -51,9 +49,7 @@ public class MapaPubli {
 		try {
 			PrintWriter salida = new PrintWriter(new File(nombre));
 			for (String  idPublis:mapaPublisCitadas.keySet()) {
-				Iterator<String> iterador = mapaPublisCitadas.get(idPublis).iterator();
-				while(iterador.hasNext()) {
-					String idCitas = iterador.next();
+				for (String idCitas: mapaPublisCitadas.get(idPublis)) {
 					salida.println(idPublis+" # "+idCitas);
 				}
 			}
@@ -111,9 +107,9 @@ public class MapaPubli {
 				if (info.length == 2) {
 					String idAutor = info[1]; //El segundo codigo es el idAutor
 					if (!mapaPublisAutor.containsKey(idPubli)) { //Si el idPubli no se ha guardado antes
-						mapaPublisAutor.put(idPubli, new UnorderedDoubleLinkedList<String>()); //Añadimos al mapa el idPubli y un array
+						mapaPublisAutor.put(idPubli, new ArrayList<>()); //Añadimos al mapa el idPubli y un array
 					}                                                   //donde se guardaran los autores de esa publi
-					mapaPublisAutor.get(idPubli).addToFront(idAutor); //Añadimos el idAutor aesa publi
+					mapaPublisAutor.get(idPubli).add(idAutor); //Añadimos el idAutor aesa publi
 				}                                               // se ejecuta siempre.
 			}
 			entrada.close();
@@ -126,9 +122,7 @@ public class MapaPubli {
 		try {
 			PrintWriter salida = new PrintWriter(new File(nombre));
 			for (String idPublis: mapaPublisAutor.keySet()) {
-				Iterator<String> iterador = mapaPublisAutor.get(idPublis).iterator();
-				while(iterador.hasNext()) {
-					String idAutor = iterador.next();
+				for (String idAutor: mapaPublisAutor.get(idPublis)) {
 					salida.println(idPublis+" # "+idAutor);
 				}
 			}
@@ -150,34 +144,35 @@ public class MapaPubli {
 	
 	public void aniadirCita (String idPubli, String idCita) {
 		if (!mapaPublisCitadas.containsKey(idPubli)) {
-			mapaPublisCitadas.put(idPubli, new OrderedDoubleLinkedList<String>());
+			mapaPublisCitadas.put(idPubli, new ArrayList<>());
 		}
 		mapaPublisCitadas.get(idPubli).add(idCita);
 	}
 	
 	public void aniadirAutorAPubli (String idPubli, String idAutor) {
 		if (!mapaPublisAutor.containsKey(idPubli)) {
-			mapaPublisAutor.put(idPubli, new UnorderedDoubleLinkedList<String>());
+			mapaPublisAutor.put(idPubli, new ArrayList<>());
 		}
-		mapaPublisAutor.get(idPubli).addToFront(idAutor);
+		mapaPublisAutor.get(idPubli).add(idAutor);
 	}
 	
-	public OrderedDoubleLinkedList<String> obtenerListaCitas (String idPubli) {
-		OrderedDoubleLinkedList<String> lista = mapaPublisCitadas.get(idPubli);
+	public ArrayList<String> obtenerListaCitas (String idPubli) {
+		ArrayList<String> lista = mapaPublisCitadas.get(idPubli);
 		return lista;
 		
 	}
 	
-	public UnorderedDoubleLinkedList<String> obtenerListaAutores (Publicacion p){
-		UnorderedDoubleLinkedList<String> lista = mapaPublisAutor.get(p.getId());
+	public ArrayList<String> obtenerListaAutores (Publicacion p){
+		ArrayList<String> lista = mapaPublisAutor.get(p.getId());
 		return lista;
 	}
 	
 	public ArrayList<Publicacion> obtenerPublisDeAutor (Autor a){
 		ArrayList<Publicacion> listaPublis = new ArrayList<>();
 		for (String idPubli:mapaPublisAutor.keySet()) {
-			UnorderedDoubleLinkedList<String> listaAutores = mapaPublisAutor.get(idPubli);
-			if(listaAutores.contains(a.getId())) {
+			ArrayList<String> listaAutores = mapaPublisAutor.get(idPubli);
+			int pos = listaAutores.indexOf(a.getId());
+			if(pos != -1) {
 				Publicacion p =mapaPublicaciones.get(idPubli);
 				listaPublis.add(p);
 			}
@@ -252,6 +247,11 @@ public class MapaPubli {
 	//metodo para comprobar que se ha cargado el fichero de Publis-autores
 			public int comprobarNumPublisAutores () {
 				return mapaPublisAutor.keySet().size();
+			}
+
+
+			public HashMap<String, ArrayList<String>> getMapaPublisAutor() {
+				return mapaPublisAutor;
 			}
 			
 	
